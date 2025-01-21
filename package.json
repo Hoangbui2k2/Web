@@ -1,10 +1,9 @@
 {
   "name": "mqtt-light-control",
   "version": "1.0.0",
-  "main": "index.js",
+  "main": "server.js",
   "scripts": {
-    "start": "node index.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
   "keywords": [],
   "author": "",
@@ -14,8 +13,5 @@
     "body-parser": "^1.20.3",
     "express": "^4.21.2",
     "mqtt": "^5.10.3"
-  },
-  "engines": {
-    "node": ">=14.0.0"
   }
 }

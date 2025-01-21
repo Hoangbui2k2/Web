@@ -1,32 +1,15 @@
-// {
-//   "name": "mqtt-light-control",
-//   "version": "1.0.0",
-//   "main": "index.js",
-//   "scripts": {
-//     "test": "echo \"Error: no test specified\" && exit 1"
-//   },
-//   "keywords": [],
-//   "author": "",
-//   "license": "ISC",
-//   "description": "",
-//   "dependencies": {
-//     "body-parser": "^1.20.3",
-//     "express": "^4.21.2",
-//     "mqtt": "^5.10.3"
-//   }
-// }
 {
   "name": "mqtt-light-control",
   "version": "1.0.0",
-  "description": "A Node.js application for controlling lights using MQTT.",
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
-  "keywords": ["mqtt", "light-control", "home-automation"],
-  "author": "Your Name <your.email@example.com>",
-  "license": "MIT",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "",
   "dependencies": {
     "body-parser": "^1.20.3",
     "express": "^4.21.2",

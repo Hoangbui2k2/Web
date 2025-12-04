@@ -1,160 +1,303 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="vi">
 
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Smart Light Control</title>
+    <title>Smart Home - Nhà Hoa Hậu</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
+        :root {
+            --primary-color: #4facfe;
+            --secondary-color: #00f2fe;
+            --glass-bg: rgba(255, 255, 255, 0.1);
+            --glass-border: rgba(255, 255, 255, 0.2);
+            --text-color: #ffffff;
+            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
+        }
+
         body {
-            font-family: Arial, sans-serif;
-            margin: 20px;
-            background-color: #f5f5f5;
-            /* Thêm hình nền từ file hoặc URL */
-            background-image: url('https://scontent.fhan4-5.fna.fbcdn.net/v/t39.30808-6/426515310_1434132167185729_1834081546063758917_n.jpg?stp=cp6_dst-jpg_s960x960_tt6&_nc_cat=102&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG13tNCYH1_5V7flH1CB5LX-QZyaoxY99n5BnJqjFj32fkOq47Yc2VBH2jiSZHzD_hGBBgsOt_M30u87hqCELC2&_nc_ohc=PUlonBVlwJEQ7kNvgFDBZhR&_nc_oc=AdjVjXT792TLhtXvSoDrF8fTYVxbD_-0NQVz58WGScnE6LyZ44dnw8gUYZ5e6APayyg&_nc_zt=23&_nc_ht=scontent.fhan4-5.fna&_nc_gid=Arsz2tdaxe_88olDAud15Xs&oh=00_AYBu3Tb_Dj_a9QDGF1S5ppKr-TOebr6Dfu3sZnNyKBLPXQ&oe=679435F4'); /* Hoặc local image url('images/background.jpg') */
+            font-family: 'Poppins', sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-image: url('https://scontent.fhan4-5.fna.fbcdn.net/v/t39.30808-6/426515310_1434132167185729_1834081546063758917_n.jpg?stp=cp6_dst-jpg_s960x960_tt6&_nc_cat=102&ccb=1-7&_nc_sid=cc71e4&_nc_eui2=AeG13tNCYH1_5V7flH1CB5LX-QZyaoxY99n5BnJqjFj32fkOq47Yc2VBH2jiSZHzD_hGBBgsOt_M30u87hqCELC2&_nc_ohc=PUlonBVlwJEQ7kNvgFDBZhR&_nc_oc=AdjVjXT792TLhtXvSoDrF8fTYVxbD_-0NQVz58WGScnE6LyZ44dnw8gUYZ5e6APayyg&_nc_zt=23&_nc_ht=scontent.fhan4-5.fna&_nc_gid=Arsz2tdaxe_88olDAud15Xs&oh=00_AYBu3Tb_Dj_a9QDGF1S5ppKr-TOebr6Dfu3sZnNyKBLPXQ&oe=679435F4');
             background-size: cover;
             background-position: center;
+            background-attachment: fixed;
             background-repeat: no-repeat;
+            color: var(--text-color);
+            min-height: 100vh;
+        }
+
+        /* Lớp phủ tối để làm nổi bật nội dung trên hình nền */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0, 0, 0, 0.4);
+            z-index: -1;
         }
 
         h1 {
             text-align: center;
-            color: #000000;
+            font-weight: 600;
+            margin-bottom: 40px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            font-size: 2rem;
         }
 
         .grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 20px;
-            margin: 20px auto;
-            max-width: 800px;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 25px;
+            max-width: 1200px;
+            margin: 0 auto;
         }
 
         .card {
-            padding: 15px;
-            background: #06f4f4;
-            box-shadow: 0 2px 5px rgba(11, 199, 180, 0.825);
+            background: var(--glass-bg);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 20px;
             text-align: center;
-            border-radius: 8px;
+            box-shadow: var(--card-shadow);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
         }
 
-        button {
-            padding: 10px 20px;
-            margin: 5px;
-            border: none;
-            border-radius: 5px;
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
+        }
+
+        .icon-container {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+            color: rgba(255, 255, 255, 0.5);
+            transition: color 0.3s ease, text-shadow 0.3s ease;
+        }
+
+        /* Hiệu ứng khi đèn sáng */
+        .card.active .icon-container {
+            color: #ffd700; /* Màu vàng sáng */
+            text-shadow: 0 0 15px #ffd700;
+        }
+
+        .card h3 {
+            margin: 10px 0 20px 0;
+            font-size: 1.1rem;
+            font-weight: 400;
+        }
+
+        /* Toggle Switch Styling */
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
             cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: rgba(255, 255, 255, 0.3);
+            transition: .4s;
+            border-radius: 34px;
         }
 
-        .on {
-            background-color: #4caf50;
-            color: white;
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
         }
 
-        .off {
-            background-color: #f44336;
-            color: rgb(255, 255, 255);
+        input:checked + .slider {
+            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
         }
 
-        .active {
-            opacity: 1;
+        input:checked + .slider:before {
+            transform: translateX(26px);
         }
 
-        .inactive {
-            opacity: 0.5;
+        /* Mobile adjustments */
+        @media (max-width: 600px) {
+            h1 { font-size: 1.5rem; }
+            .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
+            .card { padding: 15px; }
+            .icon-container { font-size: 2rem; }
         }
     </style>
 </head>
 
 <body>
-    <h1>HỆ THỐNG ĐÈN NHÀ HOA HẬU</h1>
+    <h1><i class="fas fa-home"></i> HỆ THỐNG ĐÈN NHÀ HOA HẬU</h1>
+    
     <div class="grid">
-        <div class="card" id="porch">
+        <div class="card" id="porch-card">
+            <div class="icon-container"><i class="fas fa-umbrella-beach"></i></div>
             <h3>HIÊN</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node1/porch', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node1/porch', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="living_room1">
-            <h3>PHÒNG KHÁCH 1</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node1/living_room1', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node1/living_room1', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="living_room2">
-            <h3>PHÒNG KHÁCH 2</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node2/living_room2', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node2/living_room2', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="indoor_street">
-            <h3>ĐƯỜNG LUỒNG</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node2/indoor_street', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node2/indoor_street', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="room1">
-            <h3>PHÒNG HOÀNG</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node2/room1', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node2/room1', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="room2">
-            <h3>PHÒNG HƯƠNG</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node3/room2', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node3/room2', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="room3">
-            <h3>PHÒNG BA MẸ</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node3/room3', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node3/room3', 'OFF')">TẮT</button>
-        </div>
-        <div class="card" id="dining_room">
-            <h3>PHÒNG ĂN</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node3/dining_room', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node3/dining_room', 'OFF')">TẮT</button>
+            <label class="switch">
+                <input type="checkbox" id="porch" onchange="toggleLight(this, 'hoanghoahau/smartlight/node1/porch')">
+                <span class="slider"></span>
+            </label>
         </div>
 
-        <div class="card" id="kitchen">
+        <div class="card" id="living_room1-card">
+            <div class="icon-container"><i class="fas fa-couch"></i></div>
+            <h3>PHÒNG KHÁCH 1</h3>
+            <label class="switch">
+                <input type="checkbox" id="living_room1" onchange="toggleLight(this, 'hoanghoahau/smartlight/node1/living_room1')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="living_room2-card">
+            <div class="icon-container"><i class="fas fa-tv"></i></div>
+            <h3>PHÒNG KHÁCH 2</h3>
+            <label class="switch">
+                <input type="checkbox" id="living_room2" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/living_room2')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="indoor_street-card">
+            <div class="icon-container"><i class="fas fa-road"></i></div>
+            <h3>ĐƯỜNG LUỒNG</h3>
+            <label class="switch">
+                <input type="checkbox" id="indoor_street" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/indoor_street')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="room1-card">
+            <div class="icon-container"><i class="fas fa-user-tie"></i></div>
+            <h3>PHÒNG HOÀNG</h3>
+            <label class="switch">
+                <input type="checkbox" id="room1" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/room1')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="room2-card">
+            <div class="icon-container"><i class="fas fa-user-graduate"></i></div>
+            <h3>PHÒNG HƯƠNG</h3>
+            <label class="switch">
+                <input type="checkbox" id="room2" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/room2')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="room3-card">
+            <div class="icon-container"><i class="fas fa-user-friends"></i></div>
+            <h3>PHÒNG BA MẸ</h3>
+            <label class="switch">
+                <input type="checkbox" id="room3" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/room3')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="dining_room-card">
+            <div class="icon-container"><i class="fas fa-utensils"></i></div>
+            <h3>PHÒNG ĂN</h3>
+            <label class="switch">
+                <input type="checkbox" id="dining_room" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/dining_room')">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="card" id="kitchen-card">
+            <div class="icon-container"><i class="fas fa-fire-burner"></i></div>
             <h3>BẾP</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node4/kitchen', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node4/kitchen', 'OFF')">TẮT</button>
+            <label class="switch">
+                <input type="checkbox" id="kitchen" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/kitchen')">
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="card" id="bath">
+
+        <div class="card" id="bath-card">
+            <div class="icon-container"><i class="fas fa-bath"></i></div>
             <h3>NHÀ TẮM</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node4/bath', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node4/bath', 'OFF')">TẮT</button>
+            <label class="switch">
+                <input type="checkbox" id="bath" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/bath')">
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="card" id="toilet">
+
+        <div class="card" id="toilet-card">
+            <div class="icon-container"><i class="fas fa-restroom"></i></div>
             <h3>NHÀ VỆ SINH</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node4/toilet', 'ON')">BẬT</button>
-            <button class="off" onclick="controlLight('hoanghoahau/smartlight/node4/toilet', 'OFF')">TẮT</button>
+            <label class="switch">
+                <input type="checkbox" id="toilet" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/toilet')">
+                <span class="slider"></span>
+            </label>
         </div>
-        <div class="card" id="washing_machine">
+
+        <div class="card" id="washing_machine-card">
+            <div class="icon-container"><i class="fas fa-soap"></i></div>
             <h3>MÁY GIẶT</h3>
-            <button class="on" onclick="controlLight('hoanghoahau/smartlight/node4/washing_machine', 'ON')">BẬT</button>
-            <button class="off"
-                onclick="controlLight('hoanghoahau/smartlight/node4/washing_machine', 'OFF')">TẮT</button>
+            <label class="switch">
+                <input type="checkbox" id="washing_machine" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/washing_machine')">
+                <span class="slider"></span>
+            </label>
         </div>
     </div>
 
     <script>
         const states = {};
 
-        function updateButtonState(relay, state) {
-            const card = document.getElementById(relay.split('/').slice(-1)[0]);
-            const onButton = card.querySelector('.on');
-            const offButton = card.querySelector('.off');
+        // Cập nhật giao diện khi trạng thái thay đổi
+        function updateUI(relay, state) {
+            // Lấy ID ngắn gọn từ chuỗi relay dài (ví dụ: living_room1)
+            const id = relay.split('/').slice(-1)[0];
+            
+            const checkbox = document.getElementById(id);
+            const card = document.getElementById(id + '-card');
 
-            if (state === 'ON') {
-                onButton.classList.remove('inactive');
-                onButton.classList.add('active');
-                offButton.classList.remove('active');
-                offButton.classList.add('inactive');
-            } else if (state === 'OFF') {
-                offButton.classList.remove('inactive');
-                offButton.classList.add('active');
-                onButton.classList.remove('active');
-                onButton.classList.add('inactive');
+            if (checkbox && card) {
+                if (state === 'ON') {
+                    checkbox.checked = true;
+                    card.classList.add('active'); // Thêm hiệu ứng sáng đèn
+                } else {
+                    checkbox.checked = false;
+                    card.classList.remove('active'); // Tắt hiệu ứng
+                }
             }
         }
 
-        async function controlLight(relay, state) {
+        // Hàm xử lý khi gạt công tắc
+        async function toggleLight(element, relay) {
+            const state = element.checked ? 'ON' : 'OFF';
+            
+            // Cập nhật UI ngay lập tức cho mượt (Optimistic UI)
+            const card = element.closest('.card');
+            if(state === 'ON') card.classList.add('active');
+            else card.classList.remove('active');
+
             try {
                 const response = await fetch('/control', {
                     method: 'POST',
@@ -162,24 +305,41 @@
                     body: JSON.stringify({ relay, state }),
                 });
                 const result = await response.text();
+                
                 if (result) {
                     states[relay] = state;
-                    updateButtonState(relay, state);
+                    // Server xác nhận thành công thì giữ nguyên, nếu lỗi thì có thể revert
                 }
             } catch (error) {
                 console.error('Error:', error);
-                alert('Failed to control light');
+                alert('Không thể kết nối đến đèn!');
+                // Revert lại trạng thái nếu lỗi
+                element.checked = !element.checked;
+                if(element.checked) card.classList.add('active');
+                else card.classList.remove('active');
             }
         }
 
-        // WebSocket to receive status from server
-        const socket = new WebSocket('ws://localhost:3000');
-        socket.onmessage = (event) => {
-            const { relay, state } = JSON.parse(event.data);
-            states[relay] = state;
-            updateButtonState(relay, state);
-        };
+        // WebSocket
+        try {
+            const socket = new WebSocket('ws://localhost:3000');
+            
+            socket.onopen = () => {
+                console.log("Connected to WebSocket");
+            };
+
+            socket.onmessage = (event) => {
+                const { relay, state } = JSON.parse(event.data);
+                states[relay] = state;
+                updateUI(relay, state);
+            };
+
+            socket.onerror = (error) => {
+                console.log("WebSocket Error: ", error);
+            };
+        } catch (e) {
+            console.log("WebSocket chưa sẵn sàng hoặc lỗi: ", e);
+        }
     </script>
 </body>
-
 </html>

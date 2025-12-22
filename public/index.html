@@ -267,79 +267,66 @@
         </div>
     </div>
 
-    <script>
-        const states = {};
+<script>
+    const states = {};
+    let socket;
 
-        // Cập nhật giao diện khi trạng thái thay đổi
-        function updateUI(relay, state) {
-            // Lấy ID ngắn gọn từ chuỗi relay dài (ví dụ: living_room1)
-            const id = relay.split('/').slice(-1)[0];
-            
-            const checkbox = document.getElementById(id);
-            const card = document.getElementById(id + '-card');
+    function connectWS() {
+        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+        socket = new WebSocket(`${protocol}//${window.location.host}`);
 
-            if (checkbox && card) {
-                if (state === 'ON') {
-                    checkbox.checked = true;
-                    card.classList.add('active'); // Thêm hiệu ứng sáng đèn
-                } else {
-                    checkbox.checked = false;
-                    card.classList.remove('active'); // Tắt hiệu ứng
-                }
-            }
-        }
+        socket.onopen = () => console.log("✅ Đã kết nối WebSocket thành công!");
 
-        // Hàm xử lý khi gạt công tắc
-        async function toggleLight(element, relay) {
-            const state = element.checked ? 'ON' : 'OFF';
-            
-            // Cập nhật UI ngay lập tức cho mượt (Optimistic UI)
-            const card = element.closest('.card');
-            if(state === 'ON') card.classList.add('active');
-            else card.classList.remove('active');
-
+        socket.onmessage = (event) => {
             try {
-                const response = await fetch('/control', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ relay, state }),
-                });
-                const result = await response.text();
-                
-                if (result) {
-                    states[relay] = state;
-                    // Server xác nhận thành công thì giữ nguyên, nếu lỗi thì có thể revert
+                const data = JSON.parse(event.data);
+                if (data.relay && data.state) {
+                    console.log("📨 Cập nhật từ thiết bị:", data.relay, data.state);
+                    states[data.relay] = data.state;
+                    updateUI(data.relay, data.state);
                 }
-            } catch (error) {
-                console.error('Error:', error);
-                alert('Không thể kết nối đến đèn!');
-                // Revert lại trạng thái nếu lỗi
-                element.checked = !element.checked;
-                if(element.checked) card.classList.add('active');
-                else card.classList.remove('active');
-            }
-        }
+            } catch (e) { console.error("Lỗi parse JSON", e); }
+        };
 
-        // WebSocket
+        socket.onclose = () => {
+            console.log("⚠️ Mất kết nối. Đang thử kết nối lại sau 5s...");
+            setTimeout(connectWS, 5000); // Tự động kết nối lại
+        };
+
+        socket.onerror = (err) => console.error("❌ Lỗi WebSocket:", err);
+    }
+
+    function updateUI(relay, state) {
+        // Lấy ID sau dấu / cuối cùng
+        const id = relay.split('/').pop();
+        const checkbox = document.getElementById(id);
+        const card = document.getElementById(id + '-card');
+
+        if (checkbox) checkbox.checked = (state === 'ON');
+        if (card) {
+            state === 'ON' ? card.classList.add('active') : card.classList.remove('active');
+        }
+    }
+
+    async function toggleLight(element, relay) {
+        const state = element.checked ? 'ON' : 'OFF';
         try {
-            const socket = new WebSocket('ws://localhost:3000');
-            
-            socket.onopen = () => {
-                console.log("Connected to WebSocket");
-            };
-
-            socket.onmessage = (event) => {
-                const { relay, state } = JSON.parse(event.data);
-                states[relay] = state;
-                updateUI(relay, state);
-            };
-
-            socket.onerror = (error) => {
-                console.log("WebSocket Error: ", error);
-            };
-        } catch (e) {
-            console.log("WebSocket chưa sẵn sàng hoặc lỗi: ", e);
+            const response = await fetch('/control', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ relay, state }),
+            });
+            if (!response.ok) throw new Error();
+            states[relay] = state;
+            updateUI(relay, state);
+        } catch (error) {
+            alert('Lỗi điều khiển!');
+            element.checked = !element.checked;
         }
-    </script>
+    }
+
+    // Khởi chạy
+    connectWS();
+</script>
 </body>
 </html>

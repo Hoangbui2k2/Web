@@ -5,13 +5,13 @@ const http = require('http');
 const WebSocket = require('ws');
 
 const app = express();
-const PORT = process.env.PORT || 3000; // Sử dụng port của Render hoặc 3000
+const PORT = process.env.PORT || 3000;
 
-// Biến lưu trữ trạng thái hiện tại của tất cả thiết bị (Cache)
-// Điều này giúp Dashboard lấy lại trạng thái khi load lại trang
-let deviceStates = {};
+// Bộ nhớ đệm lưu trạng thái
+let deviceStates = {};  // Lưu ON/OFF của từng đèn
+let nodeStatus = {};    // Lưu ONLINE/OFFLINE của từng Node
 
-// ======= MQTT Configuration for HiveMQ Cloud ===========
+// ======= MQTT Configuration ===========
 const mqttOptions = {
   host: 'd246c46a2ebe40d2ae0c787f92bfdbab.s1.eu.hivemq.cloud',
   port: 8883,
@@ -21,8 +21,8 @@ const mqttOptions = {
   rejectUnauthorized: false, 
 };
 
-// ======= List of Topics ===========
-const topics = [
+// ======= Topics Configuration ===========
+const lightTopics = [
   'hoanghoahau/smartlight/node1/porch',
   'hoanghoahau/smartlight/node1/living_room1',
   'hoanghoahau/smartlight/node2/living_room2',
@@ -37,88 +37,96 @@ const topics = [
   'hoanghoahau/smartlight/node4/washing_machine',
 ];
 
-// MQTT Client
+const statusTopics = [
+  'hoanghoahau/smartlight/node1/status',
+  'hoanghoahau/smartlight/node2/status',
+  'hoanghoahau/smartlight/node3/status',
+  'hoanghoahau/smartlight/node4/status',
+];
+
 const mqttClient = mqtt.connect(mqttOptions);
 
-// ======= MQTT Event Handling ===========
 mqttClient.on('connect', () => {
   console.log('✅ Connected to HiveMQ Cloud Broker');
-  mqttClient.subscribe(topics, (err) => {
-    if (!err) console.log('✅ Subscribed to all topics');
+  // Subscribe cả topic đèn và topic trạng thái node
+  mqttClient.subscribe([...lightTopics, ...statusTopics], (err) => {
+    if (!err) console.log('✅ Subscribed to all light and status topics');
   });
 });
 
-// Xử lý tin nhắn MQTT đến
+// ======= MQTT Message Handling ===========
 mqttClient.on('message', (topic, message) => {
-  const state = message.toString();
-  
-  // Lưu trạng thái vào bộ nhớ đệm (Cache)
-  deviceStates[topic] = state;
+  const payload = message.toString();
 
-  const data = { relay: topic, state, timestamp: Date.now() };
-  console.log(`📨 MQTT -> Cache: ${topic} - ${state}`);
-  
-  // Gửi cho tất cả Web đang mở
+  // 1. Xử lý tin nhắn trạng thái kết nối Node (LWT)
+  if (topic.endsWith('/status')) {
+    const nodeName = topic.split('/')[2]; // Cắt lấy "node1", "node2"...
+    nodeStatus[nodeName] = payload;
+    
+    console.log(`📡 Node Connectivity: ${nodeName} is ${payload}`);
+    broadcast({ 
+      type: 'node_connectivity', 
+      node: nodeName, 
+      status: payload 
+    });
+    return;
+  }
+
+  // 2. Xử lý tin nhắn ON/OFF của đèn
+  deviceStates[topic] = payload;
+  const data = { relay: topic, state: payload, timestamp: Date.now() };
+  console.log(`📨 MQTT Update: ${topic} - ${payload}`);
   broadcast(data);
 });
 
-// ======= Middleware ===========
+// ======= Server & WebSocket Setup ===========
 app.use(express.static('public')); 
 app.use(bodyParser.json());
 
-// ======= HTTP & WebSocket Server ===========
 const server = http.createServer(app);
 const wss = new WebSocket.Server({ server });
-
 const clients = [];
 
 wss.on('connection', (ws) => {
   clients.push(ws);
-  console.log('🟢 New UI Client connected');
+  console.log('🟢 Client connected');
 
-  // NGAY KHI LOAD TRANG: Gửi toàn bộ trạng thái đang lưu trong Cache cho Client này
+  // Gửi trạng thái Node (Online/Offline) hiện tại
+  Object.keys(nodeStatus).forEach((node) => {
+    ws.send(JSON.stringify({ type: 'node_connectivity', node: node, status: nodeStatus[node] }));
+  });
+
+  // Gửi trạng thái Đèn (ON/OFF) hiện tại
   Object.keys(deviceStates).forEach((topic) => {
-    ws.send(JSON.stringify({
-      relay: topic,
-      state: deviceStates[topic]
-    }));
+    ws.send(JSON.stringify({ relay: topic, state: deviceStates[topic] }));
   });
 
   ws.on('close', () => {
     const index = clients.indexOf(ws);
     if (index !== -1) clients.splice(index, 1);
-    console.log('🔴 UI Client disconnected');
   });
 });
 
 function broadcast(message) {
+  const json = JSON.stringify(message);
   clients.forEach((client) => {
-    if (client.readyState === WebSocket.OPEN) {
-      client.send(JSON.stringify(message));
-    }
+    if (client.readyState === WebSocket.OPEN) client.send(json);
   });
 }
 
-// ======= REST API: Control Light ===========
+// ======= Control API ===========
 app.post('/control', (req, res) => {
   const { relay, state } = req.body;
-
-  if (!relay || !state || !topics.includes(relay)) {
+  if (!relay || !state || !lightTopics.includes(relay)) {
     return res.status(400).send('❌ Invalid Request');
   }
 
-  // Publish lệnh xuống MQTT
   mqttClient.publish(relay, state, { qos: 1, retain: true }, (err) => {
-    if (err) {
-      console.error('❌ MQTT Publish Error:', err);
-      return res.status(500).send('❌ Failed');
-    }
-    console.log(`✅ Web Control: ${relay} - ${state}`);
+    if (err) return res.status(500).send('❌ Error');
     res.send('✅ OK');
   });
 });
 
-// ======= Start Server ===========
 server.listen(PORT, () => {
   console.log(`🚀 Server is running on port ${PORT}`);
 });

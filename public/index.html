@@ -22,7 +22,6 @@
             font-family: 'Poppins', sans-serif;
             margin: 0;
             padding: 20px;
-            /* Bạn nên thay link ảnh này nếu link FB bị lỗi 403 */
             background-image: url('https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=2070&auto=format&fit=crop');
             background-size: cover;
             background-position: center;
@@ -43,12 +42,48 @@
         h1 {
             text-align: center;
             font-weight: 600;
-            margin-bottom: 40px;
+            margin-bottom: 20px;
             text-transform: uppercase;
             letter-spacing: 2px;
             text-shadow: 0 2px 4px rgba(0,0,0,0.5);
             font-size: 2rem;
         }
+
+        /* MASTER CONTROLS STYLE */
+        .master-controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin-bottom: 40px;
+        }
+
+        .btn-master {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 50px;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 600;
+            cursor: pointer;
+            color: white;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            text-transform: uppercase;
+            font-size: 0.9rem;
+        }
+
+        .btn-on { background: linear-gradient(135deg, #11998e, #38ef7d); }
+        .btn-off { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+
+        .btn-master:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            filter: brightness(1.1);
+        }
+
+        .btn-master:active { transform: translateY(0); }
 
         .grid {
             display: grid;
@@ -75,7 +110,6 @@
             position: relative;
         }
 
-        /* Lớp phủ khi Node bị Offline */
         .card.offline {
             opacity: 0.4;
             pointer-events: none;
@@ -158,12 +192,22 @@
             .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
             .card { padding: 15px; }
             .icon-container { font-size: 2rem; }
+            .btn-master { padding: 10px 15px; font-size: 0.8rem; }
         }
     </style>
 </head>
 
 <body>
     <h1><i class="fas fa-home"></i> HỆ THỐNG ĐÈN NHÀ HOA HẬU</h1>
+
+    <div class="master-controls">
+        <button class="btn-master btn-on" onclick="masterControl('ON')">
+            <i class="fas fa-lightbulb"></i> Bật tất cả
+        </button>
+        <button class="btn-master btn-off" onclick="masterControl('OFF')">
+            <i class="fas fa-power-off"></i> Tắt tất cả
+        </button>
+    </div>
     
     <div class="grid">
         <div class="card node1" id="porch-card">
@@ -288,11 +332,9 @@
             try {
                 const data = JSON.parse(event.data);
                 
-                // 1. Xử lý kết nối của Node
                 if (data.type === 'node_connectivity') {
                     updateNodeStatus(data.node, data.status);
                 } 
-                // 2. Xử lý trạng thái đèn
                 else if (data.relay && data.state) {
                     updateUI(data.relay, data.state);
                 }
@@ -305,9 +347,7 @@
         };
     }
 
-    // Hàm cập nhật trạng thái Online/Offline cho toàn bộ Node
     function updateNodeStatus(node, status) {
-        console.log(`UI Update: ${node} is ${status}`);
         const cards = document.querySelectorAll(`.${node}`);
         cards.forEach(card => {
             if (status === 'OFFLINE') {
@@ -333,11 +373,28 @@
         }
     }
 
+    // HÀM ĐIỀU KHIỂN TẤT CẢ
+    async function masterControl(state) {
+        const confirmMsg = state === 'ON' ? "Bật toàn bộ đèn?" : "Tắt toàn bộ đèn?";
+        if (!confirm(confirmMsg)) return;
+
+        try {
+            const response = await fetch('/control-all', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ state }),
+            });
+            if (!response.ok) throw new Error();
+            console.log(`Master command ${state} sent.`);
+        } catch (error) {
+            alert('Lỗi gửi lệnh tổng!');
+        }
+    }
+
     async function toggleLight(element, relay) {
         const originalState = !element.checked;
         const state = element.checked ? 'ON' : 'OFF';
         
-        // Optimistic UI update
         const id = relay.split('/').pop();
         const card = document.getElementById(id + '-card');
         if(card) state === 'ON' ? card.classList.add('active') : card.classList.remove('active');
@@ -350,7 +407,7 @@
             });
             if (!response.ok) throw new Error();
         } catch (error) {
-            alert('Lỗi điều khiển! Thiết bị có thể đã offline.');
+            alert('Lỗi điều khiển!');
             element.checked = originalState;
             updateUI(relay, originalState ? 'ON' : 'OFF');
         }

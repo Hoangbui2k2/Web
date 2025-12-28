@@ -1,419 +1,179 @@
 <!DOCTYPE html>
 <html lang="vi">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Smart Home - Nhà Hoa Hậu</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
         :root {
             --primary-color: #4facfe;
             --secondary-color: #00f2fe;
-            --glass-bg: rgba(255, 255, 255, 0.1);
-            --glass-border: rgba(255, 255, 255, 0.2);
             --text-color: #ffffff;
-            --card-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.37);
         }
 
         body {
             font-family: 'Poppins', sans-serif;
-            margin: 0;
-            padding: 20px;
-            background-image: url('https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=2070&auto=format&fit=crop');
-            background-size: cover;
-            background-position: center;
-            background-attachment: fixed;
-            background-repeat: no-repeat;
+            margin: 0; padding: 20px;
+            background: #0f172a url('https://images.unsplash.com/photo-1558002038-1055907df827?q=80&w=2070&auto=format&fit=crop') center/cover fixed;
             color: var(--text-color);
             min-height: 100vh;
         }
 
-        body::before {
-            content: '';
-            position: fixed;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background: rgba(0, 0, 0, 0.5);
-            z-index: -1;
+        body::before { content: ''; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: -1; }
+
+        h1 { text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
+
+        /* --- MASTER SWITCH DESIGN --- */
+        .master-wrapper {
+            display: flex; flex-direction: column; align-items: center;
+            margin: 0 auto 50px; padding: 25px; max-width: 200px;
+            background: rgba(255, 255, 255, 0.05); border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
         }
 
-        h1 {
-            text-align: center;
-            font-weight: 600;
-            margin-bottom: 20px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
-            font-size: 2rem;
+        .master-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 2px; margin-bottom: 15px; color: var(--secondary-color); }
+
+        .master-switch { position: relative; width: 100px; height: 50px; }
+        .master-switch input { opacity: 0; width: 0; height: 0; }
+
+        .m-slider {
+            position: absolute; inset: 0; cursor: pointer; background: rgba(0,0,0,0.4);
+            border-radius: 50px; transition: 0.4s; border: 2px solid rgba(255,255,255,0.1);
+            display: flex; align-items: center; justify-content: space-between; padding: 0 12px;
         }
 
-        /* MASTER CONTROLS STYLE */
-        .master-controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-bottom: 40px;
+        .m-slider:before {
+            content: ""; position: absolute; height: 38px; width: 38px; left: 6px; bottom: 4px;
+            background: #fff; border-radius: 50%; transition: 0.4s; z-index: 2; box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
 
-        .btn-master {
-            padding: 12px 25px;
-            border: none;
-            border-radius: 50px;
-            font-family: 'Poppins', sans-serif;
-            font-weight: 600;
-            cursor: pointer;
-            color: white;
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-            text-transform: uppercase;
-            font-size: 0.9rem;
-        }
+        .master-switch input:checked + .m-slider { background: linear-gradient(45deg, #00f2fe, #4facfe); box-shadow: 0 0 25px rgba(0, 242, 254, 0.4); }
+        .master-switch input:checked + .m-slider:before { transform: translateX(48px); }
 
-        .btn-on { background: linear-gradient(135deg, #11998e, #38ef7d); }
-        .btn-off { background: linear-gradient(135deg, #cb2d3e, #ef473a); }
+        .m-slider i { font-size: 1.2rem; transition: 0.4s; z-index: 1; }
+        .icon-on { color: transparent; }
+        .icon-off { color: rgba(255,255,255,0.4); }
+        input:checked + .m-slider .icon-on { color: #fff; }
+        input:checked + .m-slider .icon-off { color: transparent; }
 
-        .btn-master:hover {
-            transform: translateY(-3px) scale(1.05);
-            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
-            filter: brightness(1.1);
-        }
-
-        .btn-master:active { transform: translateY(0); }
-
-        .grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-            gap: 25px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
+        /* --- GRID & CARDS --- */
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
 
         .card {
-            background: var(--glass-bg);
-            backdrop-filter: blur(10px);
-            -webkit-backdrop-filter: blur(10px);
-            border: 1px solid var(--glass-border);
-            border-radius: 20px;
-            padding: 20px;
-            text-align: center;
-            box-shadow: var(--card-shadow);
-            transition: all 0.4s ease;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: space-between;
-            position: relative;
+            background: rgba(255,255,255,0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255,255,255,0.1); border-radius: 20px;
+            padding: 20px; text-align: center; transition: 0.3s; position: relative;
         }
 
-        .card.offline {
-            opacity: 0.4;
-            pointer-events: none;
-            filter: grayscale(1);
-        }
+        .card.active { border-color: var(--secondary-color); background: rgba(0, 242, 254, 0.1); }
+        .card.active i { color: #ffd700; text-shadow: 0 0 15px #ffd700; }
+        .card.offline { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
+        .card.offline::after { content: 'OFFLINE'; position: absolute; top: 10px; right: 10px; font-size: 0.6rem; background: #ff4b2b; padding: 2px 6px; border-radius: 5px; }
 
-        .card.offline::after {
-            content: 'OFFLINE';
-            position: absolute;
-            top: 10px;
-            right: 10px;
-            font-size: 0.7rem;
-            background: #ff4b2b;
-            padding: 2px 8px;
-            border-radius: 10px;
-            font-weight: 600;
-        }
+        .icon-container { font-size: 2.2rem; margin-bottom: 10px; color: rgba(255,255,255,0.3); }
 
-        .card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 12px 40px 0 rgba(31, 38, 135, 0.5);
-        }
-
-        .icon-container {
-            font-size: 2.5rem;
-            margin-bottom: 10px;
-            color: rgba(255, 255, 255, 0.5);
-            transition: color 0.3s ease, text-shadow 0.3s ease;
-        }
-
-        .card.active .icon-container {
-            color: #ffd700;
-            text-shadow: 0 0 15px #ffd700;
-        }
-
-        .card h3 {
-            margin: 10px 0 20px 0;
-            font-size: 1.1rem;
-            font-weight: 400;
-        }
-
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
-        }
-
+        /* Switch nhỏ bên trong Card */
+        .switch { position: relative; width: 50px; height: 26px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
-
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0; left: 0; right: 0; bottom: 0;
-            background-color: rgba(255, 255, 255, 0.3);
-            transition: .4s;
-            border-radius: 34px;
-        }
-
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px; width: 26px;
-            left: 4px; bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-
-        input:checked + .slider {
-            background: linear-gradient(to right, var(--primary-color), var(--secondary-color));
-        }
-
-        input:checked + .slider:before {
-            transform: translateX(26px);
-        }
-
-        @media (max-width: 600px) {
-            h1 { font-size: 1.5rem; }
-            .grid { grid-template-columns: repeat(2, 1fr); gap: 15px; }
-            .card { padding: 15px; }
-            .icon-container { font-size: 2rem; }
-            .btn-master { padding: 10px 15px; font-size: 0.8rem; }
-        }
+        .slider { position: absolute; inset: 0; background: rgba(255,255,255,0.2); border-radius: 34px; cursor: pointer; transition: 0.4s; }
+        .slider:before { content: ""; position: absolute; height: 18px; width: 18px; left: 4px; bottom: 4px; background: white; border-radius: 50%; transition: 0.4s; }
+        input:checked + .slider { background: var(--primary-color); }
+        input:checked + .slider:before { transform: translateX(24px); }
     </style>
 </head>
-
 <body>
-    <h1><i class="fas fa-home"></i> HỆ THỐNG ĐÈN NHÀ HOA HẬU</h1>
 
-    <div class="master-controls">
-        <button class="btn-master btn-on" onclick="masterControl('ON')">
-            <i class="fas fa-lightbulb"></i> Bật tất cả
-        </button>
-        <button class="btn-master btn-off" onclick="masterControl('OFF')">
-            <i class="fas fa-power-off"></i> Tắt tất cả
-        </button>
-    </div>
-    
-    <div class="grid">
-        <div class="card node1" id="porch-card">
-            <div class="icon-container"><i class="fas fa-umbrella-beach"></i></div>
-            <h3>HIÊN</h3>
-            <label class="switch">
-                <input type="checkbox" id="porch" onchange="toggleLight(this, 'hoanghoahau/smartlight/node1/porch')">
-                <span class="slider"></span>
-            </label>
-        </div>
+    <h1><i class="fas fa-home"></i> Smart Home</h1>
 
-        <div class="card node1" id="living_room1-card">
-            <div class="icon-container"><i class="fas fa-couch"></i></div>
-            <h3>PHÒNG KHÁCH 1</h3>
-            <label class="switch">
-                <input type="checkbox" id="living_room1" onchange="toggleLight(this, 'hoanghoahau/smartlight/node1/living_room1')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node2" id="living_room2-card">
-            <div class="icon-container"><i class="fas fa-tv"></i></div>
-            <h3>PHÒNG KHÁCH 2</h3>
-            <label class="switch">
-                <input type="checkbox" id="living_room2" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/living_room2')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node2" id="indoor_street-card">
-            <div class="icon-container"><i class="fas fa-road"></i></div>
-            <h3>ĐƯỜNG LUỒNG</h3>
-            <label class="switch">
-                <input type="checkbox" id="indoor_street" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/indoor_street')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node2" id="room1-card">
-            <div class="icon-container"><i class="fas fa-user-tie"></i></div>
-            <h3>PHÒNG HOÀNG</h3>
-            <label class="switch">
-                <input type="checkbox" id="room1" onchange="toggleLight(this, 'hoanghoahau/smartlight/node2/room1')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node3" id="room2-card">
-            <div class="icon-container"><i class="fas fa-user-graduate"></i></div>
-            <h3>PHÒNG HƯƠNG</h3>
-            <label class="switch">
-                <input type="checkbox" id="room2" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/room2')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node3" id="room3-card">
-            <div class="icon-container"><i class="fas fa-user-friends"></i></div>
-            <h3>PHÒNG BA MẸ</h3>
-            <label class="switch">
-                <input type="checkbox" id="room3" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/room3')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node3" id="dining_room-card">
-            <div class="icon-container"><i class="fas fa-utensils"></i></div>
-            <h3>PHÒNG ĂN</h3>
-            <label class="switch">
-                <input type="checkbox" id="dining_room" onchange="toggleLight(this, 'hoanghoahau/smartlight/node3/dining_room')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node4" id="kitchen-card">
-            <div class="icon-container"><i class="fas fa-fire-burner"></i></div>
-            <h3>BẾP</h3>
-            <label class="switch">
-                <input type="checkbox" id="kitchen" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/kitchen')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node4" id="bath-card">
-            <div class="icon-container"><i class="fas fa-bath"></i></div>
-            <h3>NHÀ TẮM</h3>
-            <label class="switch">
-                <input type="checkbox" id="bath" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/bath')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node4" id="toilet-card">
-            <div class="icon-container"><i class="fas fa-restroom"></i></div>
-            <h3>NHÀ VỆ SINH</h3>
-            <label class="switch">
-                <input type="checkbox" id="toilet" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/toilet')">
-                <span class="slider"></span>
-            </label>
-        </div>
-
-        <div class="card node4" id="washing_machine-card">
-            <div class="icon-container"><i class="fas fa-soap"></i></div>
-            <h3>MÁY GIẶT</h3>
-            <label class="switch">
-                <input type="checkbox" id="washing_machine" onchange="toggleLight(this, 'hoanghoahau/smartlight/node4/washing_machine')">
-                <span class="slider"></span>
-            </label>
-        </div>
+    <div class="master-wrapper">
+        <span class="master-label">ALL SYSTEMS</span>
+        <label class="master-switch">
+            <input type="checkbox" id="master-trigger" onchange="masterControl(this)">
+            <span class="m-slider">
+                <i class="fas fa-power-off icon-off"></i>
+                <i class="fas fa-lightbulb icon-on"></i>
+            </span>
+        </label>
     </div>
 
-<script>
-    let socket;
+    <div class="grid" id="main-grid">
+        <script>
+            const lights = [
+                {id: 'porch', name: 'HIÊN', node: 'node1', icon: 'umbrella-beach'},
+                {id: 'living_room1', name: 'PHÒNG KHÁCH 1', node: 'node1', icon: 'couch'},
+                {id: 'living_room2', name: 'PHÒNG KHÁCH 2', node: 'node2', icon: 'tv'},
+                {id: 'indoor_street', name: 'ĐƯỜNG LUỒNG', node: 'node2', icon: 'road'},
+                {id: 'room1', name: 'PHÒNG HOÀNG', node: 'node2', icon: 'user-tie'},
+                {id: 'room2', name: 'PHÒNG HƯƠNG', node: 'node3', icon: 'user-graduate'},
+                {id: 'room3', name: 'PHÒNG BA MẸ', node: 'node3', icon: 'user-friends'},
+                {id: 'dining_room', name: 'PHÒNG ĂN', node: 'node3', icon: 'utensils'},
+                {id: 'kitchen', name: 'BẾP', node: 'node4', icon: 'fire-burner'},
+                {id: 'bath', name: 'NHÀ TẮM', node: 'node4', icon: 'bath'},
+                {id: 'toilet', name: 'NHÀ VỆ SINH', node: 'node4', icon: 'restroom'},
+                {id: 'washing_machine', name: 'MÁY GIẶT', node: 'node4', icon: 'soap'}
+            ];
 
-    function connectWS() {
-        const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
-        socket = new WebSocket(`${protocol}//${window.location.host}`);
+            document.getElementById('main-grid').innerHTML = lights.map(l => `
+                <div class="card ${l.node}" id="${l.id}-card">
+                    <div class="icon-container"><i class="fas fa-${l.icon}"></i></div>
+                    <h3>${l.name}</h3>
+                    <label class="switch">
+                        <input type="checkbox" id="${l.id}" onchange="toggleLight(this, 'hoanghoahau/smartlight/${l.node}/${l.id}')">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            `).join('');
+        </script>
+    </div>
 
-        socket.onopen = () => console.log("✅ WebSocket Connected");
+    <script>
+        let socket;
+        function connectWS() {
+            socket = new WebSocket(`${window.location.protocol === 'https:' ? 'wss:' : 'ws:'}//${window.location.host}`);
+            socket.onmessage = (e) => {
+                const data = JSON.parse(e.data);
+                if (data.type === 'node_connectivity') updateNodeStatus(data.node, data.status);
+                else if (data.relay) updateUI(data.relay, data.state);
+            };
+            socket.onclose = () => setTimeout(connectWS, 3000);
+        }
 
-        socket.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                
-                if (data.type === 'node_connectivity') {
-                    updateNodeStatus(data.node, data.status);
-                } 
-                else if (data.relay && data.state) {
-                    updateUI(data.relay, data.state);
-                }
-            } catch (e) { console.error("Parse error", e); }
-        };
+        function updateNodeStatus(node, status) {
+            document.querySelectorAll(`.${node}`).forEach(c => {
+                c.classList.toggle('offline', status === 'OFFLINE');
+                c.querySelector('input').disabled = (status === 'OFFLINE');
+            });
+        }
 
-        socket.onclose = () => {
-            console.log("⚠️ Disconnected. Retrying...");
-            setTimeout(connectWS, 5000);
-        };
-    }
-
-    function updateNodeStatus(node, status) {
-        const cards = document.querySelectorAll(`.${node}`);
-        cards.forEach(card => {
-            if (status === 'OFFLINE') {
-                card.classList.add('offline');
-                const checkbox = card.querySelector('input[type="checkbox"]');
-                if(checkbox) checkbox.disabled = true;
-            } else {
-                card.classList.remove('offline');
-                const checkbox = card.querySelector('input[type="checkbox"]');
-                if(checkbox) checkbox.disabled = false;
+        function updateUI(relay, state) {
+            const id = relay.split('/').pop();
+            const cb = document.getElementById(id);
+            if (cb) {
+                cb.checked = (state === 'ON');
+                document.getElementById(id + '-card').classList.toggle('active', state === 'ON');
             }
-        });
-    }
-
-    function updateUI(relay, state) {
-        const id = relay.split('/').pop();
-        const checkbox = document.getElementById(id);
-        const card = document.getElementById(id + '-card');
-
-        if (checkbox) checkbox.checked = (state === 'ON');
-        if (card) {
-            state === 'ON' ? card.classList.add('active') : card.classList.remove('active');
         }
-    }
 
-    // HÀM ĐIỀU KHIỂN TẤT CẢ
-    async function masterControl(state) {
-        const confirmMsg = state === 'ON' ? "Bật toàn bộ đèn?" : "Tắt toàn bộ đèn?";
-        if (!confirm(confirmMsg)) return;
-
-        try {
-            const response = await fetch('/control-all', {
+        async function masterControl(el) {
+            const state = el.checked ? 'ON' : 'OFF';
+            await fetch('/control-all', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ state }),
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ state })
             });
-            if (!response.ok) throw new Error();
-            console.log(`Master command ${state} sent.`);
-        } catch (error) {
-            alert('Lỗi gửi lệnh tổng!');
         }
-    }
 
-    async function toggleLight(element, relay) {
-        const originalState = !element.checked;
-        const state = element.checked ? 'ON' : 'OFF';
-        
-        const id = relay.split('/').pop();
-        const card = document.getElementById(id + '-card');
-        if(card) state === 'ON' ? card.classList.add('active') : card.classList.remove('active');
-
-        try {
-            const response = await fetch('/control', {
+        async function toggleLight(el, relay) {
+            await fetch('/control', {
                 method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ relay, state }),
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify({ relay, state: el.checked ? 'ON' : 'OFF' })
             });
-            if (!response.ok) throw new Error();
-        } catch (error) {
-            alert('Lỗi điều khiển!');
-            element.checked = originalState;
-            updateUI(relay, originalState ? 'ON' : 'OFF');
         }
-    }
 
-    connectWS();
-</script>
+        connectWS();
+    </script>
 </body>
 </html>

@@ -23,17 +23,17 @@
 
         body::before { content: ''; position: fixed; inset: 0; background: rgba(0, 0, 0, 0.6); z-index: -1; }
 
-        h1 { text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; }
+        h1 { text-align: center; text-transform: uppercase; letter-spacing: 2px; margin-bottom: 30px; font-weight: 600; }
 
-        /* --- MASTER SWITCH DESIGN --- */
+        /* --- THIẾT KẾ NÚT TỔNG --- */
         .master-wrapper {
             display: flex; flex-direction: column; align-items: center;
-            margin: 0 auto 50px; padding: 25px; max-width: 200px;
+            margin: 0 auto 50px; padding: 25px; max-width: 220px;
             background: rgba(255, 255, 255, 0.05); border-radius: 30px;
-            border: 1px solid rgba(255, 255, 255, 0.1); backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2); backdrop-filter: blur(10px);
         }
 
-        .master-label { font-size: 0.7rem; font-weight: 600; letter-spacing: 2px; margin-bottom: 15px; color: var(--secondary-color); }
+        .master-label { font-size: 0.8rem; font-weight: 600; letter-spacing: 2px; margin-bottom: 15px; color: var(--secondary-color); text-transform: uppercase; }
 
         .master-switch { position: relative; width: 100px; height: 50px; }
         .master-switch input { opacity: 0; width: 0; height: 0; }
@@ -49,7 +49,7 @@
             background: #fff; border-radius: 50%; transition: 0.4s; z-index: 2; box-shadow: 0 0 15px rgba(0,0,0,0.5);
         }
 
-        .master-switch input:checked + .m-slider { background: linear-gradient(45deg, #00f2fe, #4facfe); box-shadow: 0 0 25px rgba(0, 242, 254, 0.4); }
+        .master-switch input:checked + .m-slider { background: linear-gradient(45deg, #00f2fe, #4facfe); box-shadow: 0 0 25px rgba(0, 242, 254, 0.5); }
         .master-switch input:checked + .m-slider:before { transform: translateX(48px); }
 
         .m-slider i { font-size: 1.2rem; transition: 0.4s; z-index: 1; }
@@ -58,7 +58,7 @@
         input:checked + .m-slider .icon-on { color: #fff; }
         input:checked + .m-slider .icon-off { color: transparent; }
 
-        /* --- GRID & CARDS --- */
+        /* --- LƯỚI THIẾT BỊ --- */
         .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 20px; max-width: 1200px; margin: 0 auto; }
 
         .card {
@@ -70,11 +70,10 @@
         .card.active { border-color: var(--secondary-color); background: rgba(0, 242, 254, 0.1); }
         .card.active i { color: #ffd700; text-shadow: 0 0 15px #ffd700; }
         .card.offline { opacity: 0.3; filter: grayscale(1); pointer-events: none; }
-        .card.offline::after { content: 'OFFLINE'; position: absolute; top: 10px; right: 10px; font-size: 0.6rem; background: #ff4b2b; padding: 2px 6px; border-radius: 5px; }
+        .card.offline::after { content: 'MẤT KẾT NỐI'; position: absolute; top: 10px; right: 10px; font-size: 0.6rem; background: #ff4b2b; padding: 2px 6px; border-radius: 5px; font-weight: 600; }
 
         .icon-container { font-size: 2.2rem; margin-bottom: 10px; color: rgba(255,255,255,0.3); }
 
-        /* Switch nhỏ bên trong Card */
         .switch { position: relative; width: 50px; height: 26px; display: inline-block; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; inset: 0; background: rgba(255,255,255,0.2); border-radius: 34px; cursor: pointer; transition: 0.4s; }
@@ -85,10 +84,10 @@
 </head>
 <body>
 
-    <h1><i class="fas fa-home"></i> Smart Home</h1>
+    <h1><i class="fas fa-home"></i> HỆ THỐNG ĐÈN NHÀ HOA HẬU</h1>
 
     <div class="master-wrapper">
-        <span class="master-label">ALL SYSTEMS</span>
+        <span class="master-label">ĐIỀU KHIỂN TỔNG</span>
         <label class="master-switch">
             <input type="checkbox" id="master-trigger" onchange="masterControl(this)">
             <span class="m-slider">
@@ -143,7 +142,8 @@
         function updateNodeStatus(node, status) {
             document.querySelectorAll(`.${node}`).forEach(c => {
                 c.classList.toggle('offline', status === 'OFFLINE');
-                c.querySelector('input').disabled = (status === 'OFFLINE');
+                const cb = c.querySelector('input');
+                if (cb) cb.disabled = (status === 'OFFLINE');
             });
         }
 
@@ -156,21 +156,42 @@
             }
         }
 
+        // HÀM ĐIỀU KHIỂN TỔNG VỚI XÁC NHẬN
         async function masterControl(el) {
             const state = el.checked ? 'ON' : 'OFF';
-            await fetch('/control-all', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ state })
-            });
+            const hanhDong = el.checked ? 'BẬT TẤT CẢ' : 'TẮT TẤT CẢ';
+            
+            // Hiện bảng hỏi xác nhận
+            const xacNhan = confirm(`Bạn có chắc chắn muốn ${hanhDong} các thiết bị không?`);
+            
+            if (xacNhan) {
+                try {
+                    await fetch('/control-all', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ state })
+                    });
+                } catch (err) {
+                    alert("Lỗi kết nối Server!");
+                    el.checked = !el.checked;
+                }
+            } else {
+                // Nếu hủy thì trả trạng thái nút gạt về như cũ
+                el.checked = !el.checked;
+            }
         }
 
         async function toggleLight(el, relay) {
-            await fetch('/control', {
-                method: 'POST',
-                headers: {'Content-Type': 'application/json'},
-                body: JSON.stringify({ relay, state: el.checked ? 'ON' : 'OFF' })
-            });
+            try {
+                await fetch('/control', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ relay, state: el.checked ? 'ON' : 'OFF' })
+                });
+            } catch (err) {
+                alert("Lỗi điều khiển!");
+                el.checked = !el.checked;
+            }
         }
 
         connectWS();

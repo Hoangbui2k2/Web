@@ -48,7 +48,6 @@ const mqttClient = mqtt.connect(mqttOptions);
 
 mqttClient.on('connect', () => {
   console.log('✅ Connected to HiveMQ Cloud Broker');
-  // Subscribe cả topic đèn và topic trạng thái node
   mqttClient.subscribe([...lightTopics, ...statusTopics], (err) => {
     if (!err) console.log('✅ Subscribed to all light and status topics');
   });
@@ -58,21 +57,14 @@ mqttClient.on('connect', () => {
 mqttClient.on('message', (topic, message) => {
   const payload = message.toString();
 
-  // 1. Xử lý tin nhắn trạng thái kết nối Node (LWT)
   if (topic.endsWith('/status')) {
-    const nodeName = topic.split('/')[2]; // Cắt lấy "node1", "node2"...
+    const nodeName = topic.split('/')[2];
     nodeStatus[nodeName] = payload;
-    
     console.log(`📡 Node Connectivity: ${nodeName} is ${payload}`);
-    broadcast({ 
-      type: 'node_connectivity', 
-      node: nodeName, 
-      status: payload 
-    });
+    broadcast({ type: 'node_connectivity', node: nodeName, status: payload });
     return;
   }
 
-  // 2. Xử lý tin nhắn ON/OFF của đèn
   deviceStates[topic] = payload;
   const data = { relay: topic, state: payload, timestamp: Date.now() };
   console.log(`📨 MQTT Update: ${topic} - ${payload}`);
@@ -91,12 +83,10 @@ wss.on('connection', (ws) => {
   clients.push(ws);
   console.log('🟢 Client connected');
 
-  // Gửi trạng thái Node (Online/Offline) hiện tại
   Object.keys(nodeStatus).forEach((node) => {
     ws.send(JSON.stringify({ type: 'node_connectivity', node: node, status: nodeStatus[node] }));
   });
 
-  // Gửi trạng thái Đèn (ON/OFF) hiện tại
   Object.keys(deviceStates).forEach((topic) => {
     ws.send(JSON.stringify({ relay: topic, state: deviceStates[topic] }));
   });
@@ -114,7 +104,7 @@ function broadcast(message) {
   });
 }
 
-// ======= Control API ===========
+// ======= API: Điều khiển 1 thiết bị ===========
 app.post('/control', (req, res) => {
   const { relay, state } = req.body;
   if (!relay || !state || !lightTopics.includes(relay)) {
@@ -125,6 +115,26 @@ app.post('/control', (req, res) => {
     if (err) return res.status(500).send('❌ Error');
     res.send('✅ OK');
   });
+});
+
+// ======= API: ĐIỀU KHIỂN TẤT CẢ (MỚI THÊM) ===========
+app.post('/control-all', (req, res) => {
+  const { state } = req.body; // Nhận 'ON' hoặc 'OFF'
+
+  if (state !== 'ON' && state !== 'OFF') {
+    return res.status(400).send('❌ Invalid state');
+  }
+
+  console.log(`📢 LỆNH TỔNG: Đang ${state === 'ON' ? 'BẬT' : 'TẮT'} tất cả thiết bị...`);
+
+  // Duyệt qua mảng tất cả các topic đèn để gửi lệnh đồng loạt
+  lightTopics.forEach((topic) => {
+    mqttClient.publish(topic, state, { qos: 1, retain: true }, (err) => {
+      if (err) console.error(`❌ Lỗi gửi lệnh tới ${topic}:`, err);
+    });
+  });
+
+  res.send(`✅ Đã gửi lệnh ${state} tới toàn bộ hệ thống`);
 });
 
 server.listen(PORT, () => {
